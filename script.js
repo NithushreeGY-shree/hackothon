@@ -85,24 +85,29 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-// Restore registered state on page load
+// Restore registered button labels on page load (keep enabled so users can always open the form)
 const initialRegistrations = JSON.parse(localStorage.getItem('campusconnect_registrations') || '[]');
 $$('.register-btn').forEach(button => {
   if (initialRegistrations.includes(button.dataset.event)) {
     button.textContent = 'Registered ✓';
-    button.disabled = true;
-    button.style.opacity = '.7';
   }
 });
 
-// Clicking "Register interest" opens the registration form
-$$('.register-btn').forEach(button => button.addEventListener('click', () => {
+// Clicking "Register interest" always opens the registration form
+$$('.register-btn').forEach(button => button.addEventListener('click', (e) => {
+  e.preventDefault();
   const eventName = button.dataset.event;
-  const registrations = JSON.parse(localStorage.getItem('campusconnect_registrations') || '[]');
-  if (registrations.includes(eventName)) {
-    toast(`You are already registered for ${eventName}.`);
-    return;
+
+  // Pre-fill previous details if already submitted
+  const allDetails = JSON.parse(localStorage.getItem('campusconnect_registrations_details') || '[]');
+  const existing = allDetails.reverse().find(item => item.eventName === eventName);
+  if (existing) {
+    if ($('#regName')) $('#regName').value = existing.name || '';
+    if ($('#regEmail')) $('#regEmail').value = existing.email || '';
+    if ($('#regDept') && existing.dept) $('#regDept').value = existing.dept;
+    if ($('#regYear') && existing.year) $('#regYear').value = existing.year;
   }
+
   openRegisterModal(eventName, button);
 }));
 
@@ -152,7 +157,7 @@ registerForm.addEventListener('submit', async (event) => {
   // 3. Update button state
   if (activeRegisterButton) {
     activeRegisterButton.textContent = 'Registered ✓';
-    activeRegisterButton.disabled = true;
+  }
     activeRegisterButton.style.opacity = '.7';
   }
 
